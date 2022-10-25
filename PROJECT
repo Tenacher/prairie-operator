@@ -1,0 +1,19 @@
+domain: kismi
+layout:
+- go.kubebuilder.io/v3
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
+projectName: prairie-operator
+repo: github.com/Tenacher/prairie-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kismi
+  group: prairie
+  kind: HomeAgent
+  path: github.com/Tenacher/prairie-operator/api/v1
+  version: v1
+version: "3"

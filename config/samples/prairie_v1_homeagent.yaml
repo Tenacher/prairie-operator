@@ -1,0 +1,12 @@
+apiVersion: prairie.kismi/v1
+kind: HomeAgent
+metadata:
+  labels:
+    app.kubernetes.io/name: homeagent
+    app.kubernetes.io/instance: homeagent-sample
+    app.kubernetes.io/part-of: prairie-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: prairie-operator
+  name: homeagent-sample
+spec:
+  # TODO(user): Add fields here

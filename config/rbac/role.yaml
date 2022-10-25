@@ -1,0 +1,33 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - prairie.kismi
+  resources:
+  - homeagents
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - prairie.kismi
+  resources:
+  - homeagents/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - prairie.kismi
+  resources:
+  - homeagents/status
+  verbs:
+  - get
+  - patch
+  - update
