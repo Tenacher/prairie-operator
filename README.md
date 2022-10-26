@@ -1,8 +1,28 @@
 # prairie-operator
-// TODO(user): Add simple overview of use/purpose
+The Prairie Operator manages home agents deployed in a kubernetes cluster.
 
 ## Description
-// TODO(user): An in-depth paragraph about your project and overview of use
+Prairie Operator aims to deploy a specified amount of home agents (HA) for use in an ip6 network context. An example configuration is the following:
+
+```
+apiVersion: prairie.kismi/v1
+kind: HomeAgent
+metadata:
+  name: ha-sample
+spec:
+  size: 2
+```
+
+In the example above we created a HomeAgent pool named ha-sample and specified its size to be 2. This means that 2 HomeAgents will be deployed on the network their address can be found in the status fields of the HomeAgent instance under "Nodes".
+
+Deployed instances can be reached via client containers found at kismi/mo-client:latest by running the cl.out executable and supplying it with the specified home agent's ip6 address.
+
+An example:
+```sh
+./cl.out 2001:db8::1
+```
+
+After that a new interface should appear called ip6tun0 on which you can start communicating with the HA. The HA's ip6 address is always the first address available on the subnet of the ip6tun0 address.
 
 ## Getting Started
 You’ll need a Kubernetes cluster to run against. You can use [KIND](https://sigs.k8s.io/kind) to get a local cluster for testing, or run against a remote cluster.
@@ -40,9 +60,6 @@ UnDeploy the controller to the cluster:
 ```sh
 make undeploy
 ```
-
-## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
 
 ### How it works
 This project aims to follow the Kubernetes [Operator pattern](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
