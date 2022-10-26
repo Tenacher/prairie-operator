@@ -42,6 +42,8 @@ type HomeAgentReconciler struct {
 //+kubebuilder:rbac:groups=prairie.kismi,resources=homeagents,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=prairie.kismi,resources=homeagents/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=prairie.kismi,resources=homeagents/finalizers,verbs=update
+//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=core,resources=pods,verbs=get;list;watch;create;update;patch;delete
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
@@ -55,15 +57,17 @@ type HomeAgentReconciler struct {
 func (r *HomeAgentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 	log.Log.Info("Reconcile sequence has started.")
-	wait_duration, _ := time.ParseDuration("300ms")
+	wait_duration, _ := time.ParseDuration("800ms")
 
 	home_agent := &prairiev1.HomeAgent{}
 	err := r.Get(ctx, req.NamespacedName, home_agent)
 	if err != nil {
-		log.Log.Error(err, "HomeAgent CRD not found.")
-		// Resource was most likely deleted after reconcile request,
-		// thus we should return without requeueing.
+		// Resource was most likely deleted before reconcile request,
+		// thus we should clean up and return without requeueing.
 		if errors.IsNotFound(err) {
+			log.Log.Info("HomeAgent CRD not found.")
+
+			r.DeleteDeployment(ctx, req)
 			return ctrl.Result{}, nil
 		}
 		// Error reading object, requeue.
@@ -113,7 +117,7 @@ func (r *HomeAgentReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	home_agent.Status.NodeIps = podips
 
-	err = r.Update(ctx, home_agent)
+	err = r.Status().Update(ctx, home_agent)
 	if err != nil {
 		log.Log.Error(err, "HomeAgent status could not be updated.")
 		return ctrl.Result{}, err
@@ -129,6 +133,18 @@ func (r *HomeAgentReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&prairiev1.HomeAgent{}).
 		Owns(&appsv1.Deployment{}).
 		Complete(r)
+}
+
+// Deletes deployment if it exists, simply returns otherwise
+func (r *HomeAgentReconciler) DeleteDeployment(ctx context.Context, req ctrl.Request) {
+	deployment := &appsv1.Deployment{}
+	err := r.Get(ctx, req.NamespacedName, deployment)
+	if err != nil {
+		// Deployment no longer exists, we can safely return
+		return
+	}
+
+	r.Delete(ctx, deployment)
 }
 
 func (r *HomeAgentReconciler) CreateDeployment(agent *prairiev1.HomeAgent) *appsv1.Deployment {
@@ -153,7 +169,7 @@ func (r *HomeAgentReconciler) CreateDeployment(agent *prairiev1.HomeAgent) *apps
 				Spec: corev1.PodSpec{
 					Containers: []corev1.Container{
 						{
-							Name:            "HomeAgent",
+							Name:            "ha",
 							Image:           "kismi/mo-daemon:latest",
 							ImagePullPolicy: corev1.PullAlways,
 							SecurityContext: &corev1.SecurityContext{
